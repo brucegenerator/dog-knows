@@ -8,7 +8,7 @@ function App() {
   // store the data in the state
   // fetch random images of the dog breeds
   // display the data in the UI
-
+  console.log("App component");
   const [data, setData] = useState<Record<string, string[]>>();
   const [searchedBreeds, setSearchedBreeds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -45,7 +45,7 @@ function App() {
       setFilteredBreeds([]);
     } else {
       const filteredBreeds = Object.keys(data).filter((breed) =>
-        breed.toLowerCase().startsWith(searchTerm.toLowerCase())
+        breed.toLowerCase().startsWith(searchTerm.toLowerCase()),
       );
       setFilteredBreeds(filteredBreeds);
     }
