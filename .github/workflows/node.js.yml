@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy React App with Vite
 
 on:
   push:
@@ -6,41 +6,26 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-
-      - name: Install dependencies
-        uses: bahmutov/npm-install@v1
-
-      - name: Build project
-        run: npm run build
-
-      - name: Upload production-ready build files
-        uses: actions/upload-artifact@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          name: production-files
-          path: ./dist
+          node-version: 20
+          cache: npm
 
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+      - name: Install Dependencies
+        run: npm ci
 
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-files
-          path: ./dist
+      - name: Build the Vite Project
+        run: npm run build  # This will generate dist/
+
+      - name: Check if dist/ Exists
+        run: ls -la dist  # Debugging step
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
