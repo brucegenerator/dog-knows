@@ -8,7 +8,7 @@ function App() {
   // store the data in the state
   // fetch random images of the dog breeds
   // display the data in the UI
-  console.log("App component");
+  console.log("App component!");
   const [data, setData] = useState<Record<string, string[]>>();
   const [searchedBreeds, setSearchedBreeds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
