@@ -1,11 +1,13 @@
 name: Node.js CI
-'on':
+
+on:
   push:
     branches:
       - main
   pull_request:
     branches:
       - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,24 +17,34 @@ jobs:
           - 18.x
           - 20.x
           - 22.x
+
     steps:
-      - uses: actions/checkout@v4
-      - name: 'Use Node.js ${{ matrix.node-version }}'
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '${{ matrix.node-version }}'
+          node-version: ${{ matrix.node-version }}
           cache: npm
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test || echo "Skipping tests, none defined"
-      - name: Deploy with gh-pages
-        run: >
-          git remote set-url origin
-          https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
 
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build --if-present
+
+      - name: Check Build Output (Debug)
+        run: ls -la build || echo "Build directory does not exist"
+
+      - name: Run Tests (if present)
+        run: npm test || echo "Skipping tests, none defined"
+
+      - name: Deploy to GitHub Pages
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           npm run deploy -- -u "github-actions-bot <support+actions@github.com>"
-
-
-          env:
-
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
