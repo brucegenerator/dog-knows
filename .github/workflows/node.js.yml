@@ -1,38 +1,49 @@
-name: Node.js CI
-'on':
+name: Deploy
+
+on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version:
-          - 18.x
-          - 20.x
-          - 22.x
+
     steps:
-      - uses: actions/checkout@v4
-      - name: 'Use Node.js ${{ matrix.node-version }}'
-        uses: actions/setup-node@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v3
         with:
-          node-version: '${{ matrix.node-version }}'
-          cache: npm
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test || echo "Skipping tests, none defined"
-      - name: Deploy with gh-pages
-        run: >
-          git remote set-url origin
-          https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          name: production-files
+          path: ./dist
 
-          npm run deploy -- -u "github-actions-bot <support+actions@github.com>"
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: production-files
+          path: ./dist
 
-          env:
-
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
