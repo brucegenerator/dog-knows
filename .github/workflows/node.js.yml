@@ -1,50 +1,49 @@
-name: Node.js CI
+name: Deploy
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version:
-          - 18.x
-          - 20.x
-          - 22.x
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Set up Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
+          name: production-files
+          path: ./dist
 
-      - name: Install Dependencies
-        run: npm ci
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
 
-      - name: Build Project
-        run: npm run build --if-present
-
-      - name: Check Build Output (Debug)
-        run: ls -la build || echo "Build directory does not exist"
-
-      - name: Run Tests (if present)
-        run: npm test || echo "Skipping tests, none defined"
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: production-files
+          path: ./dist
 
       - name: Deploy to GitHub Pages
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "github-actions[bot]"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          npm run deploy -- -u "github-actions-bot <support+actions@github.com>"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
